@@ -222,10 +222,8 @@ Dict{String, Int64}()
 function empty!(h::Dict{K,V}) where V where K
     fill!(h.slots, 0x0)
     sz = length(h.slots)
-    for i in 1:sz
-        _unsetindex!(h.keys, i)
-        _unsetindex!(h.vals, i)
-    end
+    _unsetall!(h.keys)
+    _unsetall!(h.vals)
     h.ndel = 0
     h.count = 0
     h.maxprobe = 0

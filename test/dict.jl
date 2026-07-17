@@ -1533,6 +1533,38 @@ for T in (Int, Float64, String, Symbol)
     end
 end
 
+@testset "empty! releases references and retains capacity" begin
+    # capacity (backing memory) is retained across empty!
+    d = Dict{Int,Int}()
+    sizehint!(d, 1000)
+    cap = length(d.keys)
+    for i in 1:100; d[i] = i; end
+    empty!(d)
+    @test isempty(d)
+    @test length(d) == 0
+    @test length(d.keys) == cap
+    # still usable after empty!
+    d[1] = 10
+    @test d[1] == 10
+
+    # reference-typed keys/vals are actually unset, so the GC can reclaim them
+    d2 = Dict{Any,Any}()
+    sizehint!(d2, 64)
+    for i in 1:32; d2[Ref(i)] = Ref(i); end
+    empty!(d2)
+    @test !any(i -> isassigned(d2.keys, i), 1:length(d2.keys))
+    @test !any(i -> isassigned(d2.vals, i), 1:length(d2.vals))
+
+    # Set delegates to Dict; same invariants
+    s = Set{Int}()
+    sizehint!(s, 1000)
+    scap = length(s.dict.keys)
+    union!(s, 1:100)
+    empty!(s)
+    @test isempty(s)
+    @test length(s.dict.keys) == scap
+end
+
 struct BadHash
     i::Int
 end

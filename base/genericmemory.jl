@@ -91,6 +91,8 @@ pointer(mem::GenericMemoryRef) = unsafe_convert(Ptr{Cvoid}, mem) # no bounds che
 _unsetindex!(A::Memory, i::Int) = (@_propagate_inbounds_meta; _unsetindex!(memoryref(A, i)); A)
 _unsetindex!(A::MemoryRef) = (@_propagate_inbounds_meta; Core.memoryrefunset!(A, :not_atomic, @_boundscheck); A)
 
+_unsetall!(A::GenericMemory) = (ccall(:jl_genericmemory_unsetall, Cvoid, (Any,), A); A)
+
 elsize(@nospecialize _::Type{A}) where {T,A<:GenericMemory{<:Any,T}} = aligned_sizeof(T) # XXX: probably supposed to be the stride?
 sizeof(a::GenericMemory) = Core.sizeof(a)
 

@@ -256,6 +256,32 @@ JL_DLLEXPORT void jl_genericmemory_copyto(jl_genericmemory_t *dest, char* destda
 }
 
 
+// Unset every element of `m` in bulk: zero the reference storage so the GC can
+// reclaim the referenced objects. This is a no-op for reference-free memory
+// (pure bits or bitsunion elements).
+// Note: this is not atomic and races with concurrent readers; it is intended
+// for non-atomic memory whose exclusive owner is being cleared.
+// Like the `memoryrefunset!` intrinsic, this drops references with a plain store
+// and no GC deletion barrier, which is correct under the current stop-the-world
+// collector. If a concurrent/incremental collector is added, this must gain a
+// deletion barrier just like the intrinsic -- see the matching TODO in the
+// StoreKind::Unset case of emit_f_opmemory in src/codegen.cpp, and keep the two
+// in sync.
+JL_DLLEXPORT void jl_genericmemory_unsetall(jl_genericmemory_t *m) JL_NOTSAFEPOINT
+{
+    const jl_datatype_layout_t *layout = ((jl_datatype_t*)jl_typetagof(m))->layout;
+    // arrayelem_isboxed: each element is a bare pointer.
+    // first_ptr != -1:   inline elements that contain at least one pointer;
+    //                    "assigned" is tracked by the first pointer being non-NULL,
+    //                    so zeroing the element storage marks every slot unset and
+    //                    leaves no reference for the GC to trace.
+    // Everything else (pure bits, bitsunion) holds no references -> nothing to do.
+    if (layout->flags.arrayelem_isboxed || layout->first_ptr != -1) {
+        memset((char*)m->ptr, 0, layout->size * m->length);
+    }
+}
+
+
 // genericmemory primitives -----------------------------------------------------------
 
 JL_DLLEXPORT jl_value_t *jl_genericmemoryref(jl_genericmemory_t *mem, size_t i)

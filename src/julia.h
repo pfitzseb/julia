@@ -2187,6 +2187,7 @@ JL_DLLEXPORT jl_genericmemory_t *jl_alloc_genericmemory_unchecked(jl_ptls_t ptls
 JL_DLLEXPORT jl_value_t *jl_genericmemory_to_string(jl_genericmemory_t *m, size_t len) JL_CANSAFEPOINT;
 JL_DLLEXPORT jl_genericmemory_t *jl_alloc_memory_any(size_t n) JL_CANSAFEPOINT;
 JL_DLLEXPORT jl_value_t *jl_genericmemoryref(jl_genericmemory_t *m, size_t i) JL_CANSAFEPOINT;  // 0-indexed
+JL_DLLEXPORT void jl_genericmemory_unsetall(jl_genericmemory_t *m) JL_NOTSAFEPOINT;
 
 JL_DLLEXPORT jl_genericmemoryref_t *jl_new_memoryref(jl_value_t *typ, jl_genericmemory_t *mem, void *data) JL_CANSAFEPOINT;
 JL_DLLEXPORT jl_value_t *jl_memoryrefget(jl_genericmemoryref_t m JL_PROPAGATES_ROOT, int isatomic) JL_CANSAFEPOINT;
